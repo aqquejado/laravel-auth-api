@@ -20,6 +20,8 @@ class AuthController extends Controller
         if ($validator->fails()) {
             return response(["message"=> "Bad request", "errors" => $validator->errors()], 400);
         }
+        
+        // TODO: not login if email is not verified
  
         if (Auth::attempt($validator->validated())) {
             $user = Auth::user();
@@ -33,10 +35,11 @@ class AuthController extends Controller
     }
 
     public function register(Request $request) {
-        $validator = Validator::make($request->only(["name","email","password"]), [
+        $validator = Validator::make($request->all(), [
             "name" => "required|string",
             "email" => ["required","string","email", "unique:App\Models\User,email", "max:255"],
-            "password" => "required|string|min:8",
+            "password" => "required|string|min:8|confirmed",
+            "consent" => ["required","boolean",Rule::in([1])],
         ]);
  
         if ($validator->fails()) {
@@ -50,7 +53,7 @@ class AuthController extends Controller
         return response(["message"=> "Successfully registered", "user" => $user], 201);
     }
 
-    public function logout(Request $request) {
+    public function logout() {
         Auth::logout();
 
         return response(["message"=> "Successfully logged out"], 200);
