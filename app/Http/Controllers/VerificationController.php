@@ -9,7 +9,7 @@ class VerificationController extends Controller
 {
     public function verify($user_id, Request $request) {
         if (!$request->hasValidSignature()) {
-            return response()->json(["msg" => "Invalid/Expired url provided."], 401);
+            return response()->json(["message" => "Invalid/Expired url provided."], 401);
         }
     
         $user = User::findOrFail($user_id);
@@ -18,7 +18,7 @@ class VerificationController extends Controller
             $user->markEmailAsVerified();
         }
     
-        return redirect()->to('/');
+        return redirect()->to(env("CLIENT_APP_URL") . "/login?verified");
     }
     
     public function resend() {
