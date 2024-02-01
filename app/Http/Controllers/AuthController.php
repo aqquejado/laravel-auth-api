@@ -59,8 +59,9 @@ class AuthController extends Controller
 
     public function logout(Request $request) {
         if ($request->bearerToken()) {
-            PersonalAccessToken::findToken(request()->bearerToken())->delete();
+            $token = PersonalAccessToken::findToken(request()->bearerToken());
+            if ($token) $token->delete();
         }
-        return response(["message"=> "Successfully logged out"], 200)->withCookie("token");
+        return response(["message"=> "Successfully logged out"], 200)->withoutCookie("token");
     }
 }
