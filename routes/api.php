@@ -32,6 +32,8 @@ Route::get('/reset-password/{token}', [PasswordController::class, 'redirectReset
 
 Route::post('/reset-password', [PasswordController::class, 'reset'])->name('password.update');
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+Route::middleware(['auth:sanctum'])->group(function () {
+    Route::get('/user', function (Request $request) {
+        return $request->user();
+    });
 });

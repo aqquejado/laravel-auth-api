@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Validator;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class AuthController extends Controller
 {
@@ -20,18 +22,20 @@ class AuthController extends Controller
         if ($validator->fails()) {
             return response(["message"=> "Bad request", "errors" => $validator->errors()], 400);
         }
-        
-        // TODO: not login if email is not verified
- 
-        if (Auth::attempt($validator->validated())) {
-            $user = Auth::user();
-            return response()->json([
-                'user' => $user,
-                'token' => $user->createToken('ApiToken', [])->plainTextToken
-            ]);
+
+        $user = User::where('email', $request->email)->first();
+
+        if (!Hash::check($request->password, $user->password)) {
+            return response(["message"=> "Invalid credentials"], 400);
         }
  
-        return response(["message"=> "Invalid credentials"], 400);
+        $user->tokens()->delete();
+        $token = $user->createToken('ApiToken', [], now()->addMinutes(60))->plainTextToken;
+
+        return response()->json([
+            'user' => $user,
+            'token' => $token
+        ])->cookie("token", $token, 60, "/", null, env("APP_ENV") !== "local", false);
     }
 
     public function register(Request $request) {
@@ -53,9 +57,10 @@ class AuthController extends Controller
         return response(["message"=> "Successfully registered", "user" => $user], 201);
     }
 
-    public function logout() {
-        Auth::logout();
-
-        return response(["message"=> "Successfully logged out"], 200);
+    public function logout(Request $request) {
+        if ($request->bearerToken()) {
+            PersonalAccessToken::findToken(request()->bearerToken())->delete();
+        }
+        return response(["message"=> "Successfully logged out"], 200)->withCookie("token");
     }
 }

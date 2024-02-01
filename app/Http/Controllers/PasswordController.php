@@ -21,6 +21,12 @@ class PasswordController extends Controller
         if ($validator->fails()) {
             return response(["message"=> "Bad request", "errors" => $validator->errors()], 400);
         }
+
+        $user = User::where("email", $request->email)->first();
+
+        if (!$user->hasVerifiedEmail()) {
+            return response(["message"=> "Email has not been verified"], 401);
+        }
  
         $status = Password::sendResetLink(
             $request->only('email')
@@ -28,11 +34,11 @@ class PasswordController extends Controller
     
         return $status === Password::RESET_LINK_SENT
             ? response(['message' => __($status)], 200)
-            : response(['status' => __($status)], 500);
+            : response(['message' => __($status)], 500);
     }
 
     public function redirectReset(string $token) {
-        return redirect()->to(env("CLIENT_APP_URL") . "/reset-password?token=" . $token);
+        return redirect()->to(env("CLIENT_APP_URL") . "/auth/reset-password?token=" . $token);
     }
 
     public function reset(Request $request) {
@@ -61,6 +67,6 @@ class PasswordController extends Controller
     
         return $status === Password::PASSWORD_RESET
             ? response(["message" => __($status)], 200)
-            : response(['status' => __($status)], 500);
+            : response(["message" => __($status)], 500);
     }
 }

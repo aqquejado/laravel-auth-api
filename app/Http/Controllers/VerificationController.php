@@ -18,7 +18,7 @@ class VerificationController extends Controller
             $user->markEmailAsVerified();
         }
     
-        return redirect()->to(env("CLIENT_APP_URL") . "/login?verified");
+        return redirect()->to(env("CLIENT_APP_URL") . "/auth/login?verified");
     }
     
     public function resend() {
