@@ -51,13 +51,15 @@ class PasswordController extends Controller
         if ($validator->fails()) {
             return response(["message"=> "Bad request", "errors" => $validator->errors()], 400);
         }
+
+        // TODO: check if new password is old password
  
         $status = Password::reset(
             $request->only("email", "password", "password_confirmation", "token"),
             function (User $user, string $password) {
                 $user->forceFill([
                     'password' => Hash::make($password)
-                ])->setRememberToken(Str::random(60));
+                ]);
      
                 $user->save();
      
